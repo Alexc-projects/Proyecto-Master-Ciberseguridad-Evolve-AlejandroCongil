@@ -107,7 +107,7 @@ python ingestion/process_video.py --input clase.mp4 --output fragments/
 ## Portfolio visual
 
 Versión interactiva del proyecto con animaciones y detalle completo del roadmap:
-**[alex-proyect.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil](https://alex-proyect.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil)**
+**[alexc-projects.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil](https://alexc-projects.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil)**
 
 ---
 
