@@ -187,70 +187,111 @@ La búsqueda semántica permite encontrar fragmentos relevantes aunque no conten
 
 ## Módulos operativos
 
-### Chat RAG · `/chat`
+El sistema arranca con un único comando (`python main.py`) y expone tres interfaces en `http://127.0.0.1:8000`.
 
-Interfaz principal del sistema. Permite realizar consultas en lenguaje natural sobre todo el material del máster.
+---
 
-**Funcionamiento interno:**
-- El usuario escribe una pregunta táctica
-- El sistema recupera los fragmentos más relevantes de ChromaDB
-- Claude genera una respuesta citando las fuentes del máster
-- La respuesta incluye el fragmento de origen (sesión y timestamp)
+### Chat RAG · `/`
 
-**Casos de uso:**
+Interfaz principal de consulta en lenguaje natural sobre todo el conocimiento indexado.
+
+**Layout:**
+- **Header** — muestra el nombre del sistema y un badge en tiempo real con el total de fragmentos conectados a ChromaDB.
+- **Sidebar izquierdo** — filtros de tipo de contenido que acotan la búsqueda semántica:
+  - `Todo` — busca en toda la base de conocimiento
+  - `Conocimiento` — fragmentos teóricos de las sesiones de clase
+  - `Metodología` — ejercicios completados en el Lab (ingresados vía `/api/lab/complete`)
+  - `Herramientas` — fichas de herramientas indexadas
+  - `Writeups` — resoluciones y análisis de casos
+  - `Arsenal externo` — referencias a herramientas externas
+- **Zona de upload** (drag & drop en el sidebar) — permite subir un ZIP de sesión directamente desde el navegador. El sistema lo ingesta al vuelo y actualiza el contador de fragmentos sin reiniciar.
+- **Área de chat** — historial de conversación con formato diferenciado para mensajes de usuario y respuestas del asistente.
+- **Barra de input** — textarea multi-línea con envío por `Enter` o botón.
+
+**Flujo de una consulta:**
+1. El usuario escribe la pregunta y selecciona (opcionalmente) un filtro de tipo.
+2. El frontend hace `POST /api/query` con `{query, category, n_results}`.
+3. El backend recupera los top-5 fragmentos más similares de ChromaDB.
+4. Se construye el contexto con los fragmentos y se lanza streaming a Claude API (`claude-sonnet-4-6`).
+5. La respuesta llega por **SSE (Server-Sent Events)** — el texto se renderiza token a token en tiempo real.
+6. Antes del texto aparecen **badges de fuente** (fecha de sesión + tipo de documento) que permiten saber exactamente de dónde viene cada respuesta.
+
+**Casos de uso reales:**
 ```
-"¿Cómo se realiza un ataque de Kerberoasting?"
-"¿Qué herramientas se vieron en la sesión de OSINT pasivo?"
-"Explica el proceso de pivoting en redes segmentadas"
-"¿Qué diferencia hay entre un shell reverso y un bind shell?"
+"¿Cómo funciona un ataque de Kerberoasting paso a paso?"
+"¿Qué vimos sobre evasión de EDR en Windows en las sesiones del máster?"
+"Explícame la diferencia entre Pass-the-Hash y Pass-the-Ticket"
+"¿Qué comandos de Nmap se usaron para enumeración de servicios?"
 ```
 
-**Stack:** Python · Streamlit · ChromaDB · Claude API
+**Stack:** FastAPI · SSE Streaming · ChromaDB · Claude API (`claude-sonnet-4-6`)
 
 ---
 
 ### OSINT Lab · `/lab`
 
-Base de datos interactiva con las 1.169 herramientas OSINT catalogadas durante el máster. Diseñada para consulta rápida en operaciones de reconocimiento.
+Plataforma de entrenamiento guiado en reconocimiento pasivo. Combina teoría, ejercicios prácticos y registro de resultados que se indexan en ChromaDB para enriquecer el sistema RAG.
 
-**Funcionalidades:**
-- Búsqueda por nombre de herramienta o caso de uso
-- Filtrado por categoría (personas, dominios, IPs, redes sociales, darkweb, etc.)
-- Vista detallada con descripción táctica y ejemplos de uso
-- Exportación de listas filtradas para reportes
+**Layout:**
+- **Sidebar izquierdo — fases** — navegación por las fases del roadmap ofensivo. La Fase 1 (Reconocimiento Pasivo) está activa; las siguientes están bloqueadas hasta completarse. Cada fase muestra una barra de progreso con el porcentaje de herramientas completadas.
+- **Topbar — grupos** — dentro de cada fase, las herramientas se agrupan por categoría táctica (ej: "Búsqueda e Internet", "Infraestructura", "Personas"...). Cada grupo tiene su propio tab con indicador de completado.
+- **Grid de tool cards** — cada herramienta aparece como una tarjeta con:
+  - **Flags** de tipo: `WEB` (interfaz web), `TOOL` (ejecutable local), `PAID` (requiere pago), `WIN` (Windows), `LINUX`
+  - **Indicador de dificultad** — puntos de colores: verde (fácil), amarillo (medio), rojo (difícil)
+  - **Check verde** en la esquina superior derecha cuando la herramienta está completada
 
-**Categorías principales:**
+**Modal de herramienta — 3 pestañas:**
 
-| Categoría | Herramientas |
+| Pestaña | Contenido |
 |---|---|
-| Reconocimiento de personas | ~180 |
-| Infraestructura y dominios | ~210 |
-| Redes sociales | ~150 |
-| Geolocalización | ~90 |
-| Darkweb e inteligencia | ~120 |
-| Vulnerabilidades y exploits | ~140 |
-| Otras categorías | ~279 |
+| **Teoría** | Explicación técnica de la herramienta, operadores clave, casos de uso, notas de OPSEC |
+| **Ejercicio** | Tareas guiadas paso a paso con comandos listos para copiar (botón `copy`), descripción de qué buscar y checkbox de verificación por tarea |
+| **Completar** | Formulario de documentación post-ejercicio: comandos utilizados, hallazgos, conexiones con otras herramientas. Al enviar, el sistema llama a `POST /api/lab/complete` e indexa el documento como fragmento `tool_exercise` en ChromaDB |
 
-**Stack:** Python · FastAPI · Streamlit
+**Ejemplo de ejercicio (Google Dorks):**
+```
+Tarea 1: Documentos públicos expuestos
+  $ site:tesla.com filetype:pdf
+  ¿Encontraste documentos PDF indexados? ✓
+
+Tarea 2: Paneles de administración
+  $ site:tesla.com inurl:admin OR inurl:login OR inurl:dashboard
+  ¿Aparecen URLs con rutas administrativas? ✓
+```
+
+**Valor diferencial:** cada ejercicio completado se convierte automáticamente en un fragmento de la base de conocimiento. La próxima vez que el Chat RAG reciba una pregunta sobre esa herramienta, también recuperará tu metodología personal y tus hallazgos reales.
+
+**Stack:** FastAPI · JavaScript vanilla · ChromaDB (escritura vía `/api/lab/complete`)
 
 ---
 
 ### Framework Tracker · `/framework`
 
-Sistema de seguimiento del progreso en frameworks de ciberseguridad ofensiva. Permite mapear qué técnicas del máster han sido estudiadas y cuáles quedan pendientes.
+Mapa interactivo del OSINT Framework completo con seguimiento de progreso personal. Permite visualizar, buscar y marcar como completadas todas las herramientas del ecosistema OSINT.
 
-**Frameworks cubiertos:**
-- **MITRE ATT&CK** — tácticas y técnicas organizadas por fase del ataque
-- **Cyber Kill Chain** — fases desde reconocimiento hasta acción sobre objetivos
-- **PTES** (Penetration Testing Execution Standard)
+**Layout:**
+- **Topbar** — barra de progreso global que muestra el porcentaje total de herramientas completadas en tiempo real + buscador de herramientas + enlaces rápidos a Lab y RAG.
+- **Sidebar izquierdo — categorías** — lista de todas las categorías del OSINT Framework con badges de estado:
+  - Sin badge — ninguna herramienta completada
+  - Badge amarillo — categoría parcialmente completada
+  - Badge verde — categoría 100% completada
+- **Árbol de herramientas** — vista jerárquica expandible de la categoría seleccionada. Cada nodo muestra:
+  - **Checkbox** — marcar como completada (estado guardado en `localStorage`)
+  - **Nombre de la herramienta** con tachado visual cuando está marcada
+  - **Enlace directo** a la herramienta
+  - **Flags**: `T` (Tool/ejecutable), `R` (Registration required), `M` (Potentially malicious), `D` (Dark web)
+- **Panel de estadísticas (footer)** — totales en tiempo real: herramientas totales, completadas, categorías totales y categorías 100% completadas.
 
-**Funcionalidades:**
-- Visualización de las 33 categorías de técnicas de ataque
-- Marcado de técnicas como estudiadas / en progreso / pendientes
-- Progreso por fase (Recon, Enumeración, Explotación, Post-Explotación)
-- Correlación con el material del máster disponible en el Chat RAG
+**Fuente de datos:**
+El árbol se carga desde `GET /api/arf`, que sirve el JSON del [OSINT Framework](https://osintframework.com) (proyecto open source de lockfale). El backend lo descarga y cachea localmente en `arf.json` en el primer arranque. El frontend mantiene además una caché de 7 días en `localStorage` para evitar peticiones innecesarias.
 
-**Stack:** Python · FastAPI · Streamlit
+**Persistencia del progreso:**
+El estado de cada checkbox se guarda en `localStorage` bajo la clave `arf_progress`. No requiere cuenta ni base de datos — el progreso es local al navegador y persiste entre sesiones.
+
+**Búsqueda:**
+El campo de búsqueda filtra en tiempo real sobre todas las herramientas del árbol completo, resaltando coincidencias con su ruta de categoría (`Categoría > Subcategoría > Herramienta`).
+
+**Stack:** FastAPI · JavaScript vanilla · localStorage (persistencia) · OSINT Framework JSON (lockfale/osint-framework)
 
 ---
 
