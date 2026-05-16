@@ -104,10 +104,17 @@ python ingestion/process_video.py --input clase.mp4 --output fragments/
 
 ---
 
-## Portfolio visual
+## Ecosistema — anillo de navegación
 
-Versión interactiva del proyecto con animaciones y detalle completo del roadmap:
-**[alexc-projects.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil](https://alexc-projects.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil)**
+Todos los nodos del proyecto están interconectados:
+
+| Plataforma | Enlace |
+|---|---|
+| Portfolio | [alexc-projects.github.io/…](https://alexc-projects.github.io/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil) |
+| GitHub | [Alexc-projects/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil](https://github.com/Alexc-projects/Proyecto-Master-Ciberseguridad-Evolve-AlejandroCongil) |
+| Dev.to | [Cómo construí un sistema RAG para convertirme en Red Teamer con IA](https://dev.to/evolve-space/como-construi-un-sistema-rag-para-convertirme-en-red-teamer-con-ia-proyecto-en-evolve-4b2m) |
+| LinkedIn | [De las Telecomunicaciones al Red Team](https://www.linkedin.com/pulse/de-las-telecomunicaciones-al-red-team-c%C3%B3mo-uso-ia-mi-congil-sainz-z6h4e/) |
+| Medium | [De técnico de redes a Red Teamer: la IA como ventaja competitiva](https://medium.com/@alejandro.congil5/de-t%C3%A9cnico-de-redes-a-red-teamer-la-ia-como-ventaja-competitiva-en-ciberseguridad-68975e56dd7d) |
 
 ---
 
