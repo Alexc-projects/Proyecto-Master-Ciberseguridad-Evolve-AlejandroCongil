@@ -80,4 +80,6 @@ git push origin gh-pages
 ## Contacto
 
 - **Email:** alejandro.congil5@gmail.com
-- **LinkedIn / GitHub / Dev.to:** enlaces en la propia web.
+- **LinkedIn:** https://www.linkedin.com/pulse/de-las-telecomunicaciones-al-red-team-cómo-uso-ia-mi-congil-sainz-z6h4e/
+- **Medium:** https://medium.com/@alejandro.congil5/de-técnico-de-redes-a-red-teamer-la-ia-como-ventaja-competitiva-en-ciberseguridad-68975e56dd7d
+- **Dev.to:** https://dev.to/evolve-space/como-construi-un-sistema-rag-para-convertirme-en-red-teamer-con-ia-proyecto-en-evolve-4b2m
